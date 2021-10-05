@@ -29,9 +29,8 @@ def get_2nd_most_recent_report():
     import glob
     import os
 
-    files = glob.glob("raw_reports/*") #os.listdir(raw_dir)
+    files = glob.glob("raw_reports/formatted/*.xlsx")
     files.sort(key=os.path.getmtime)
-    print(files)
     wb = load_workbook(files[-2])
 
     return wb
@@ -39,17 +38,34 @@ def get_2nd_most_recent_report():
 #  most recent precision and recall - (subtract) 2nd most recent precision and recall
 def precision_recall_difference():
     previous_wb = get_2nd_most_recent_report()
+    previous_wb_worksheet = previous_wb.worksheets[0]
+    main_wb = load_workbook("Report.xlsx")
 
     #  check if workbook name in previous wb is in main report
     ws_title = previous_wb.active.title
-    main_wb = load_workbook("Report.xlsx")
     if ws_title in main_wb.sheetnames:
-        print("true")
+        print("sheet already done")
     else:
-        print("flase")
+        main_wb.create_sheet(ws_title)
 
-        for worksheet in main_wb.sheetnames:
-            print(worksheet)
+        # calculate total number of rows and columns in source excel file
+        mr = previous_wb_worksheet.max_row
+        mc = previous_wb_worksheet.max_column
+
+        # copying the cell values from source
+        # excel file to destination excel file
+        for i in range(1, mr + 1):
+            for j in range(1, mc + 1):
+                # reading cell value from source excel file
+                c = previous_wb_worksheet.cell(row=i, column=j)
+
+                # writing the read value to destination excel file
+                main_wb[ws_title].cell(row=i, column=j).value = c.value
+
+        main_wb.save("Report.xlsx")
+
+
+    #  https://www.geeksforgeeks.org/python-how-to-copy-data-from-one-excel-sheet-to-another/
 
 
 def find_already_formatted_files():
@@ -58,6 +74,7 @@ def find_already_formatted_files():
         file = file.split("\\")[-1]
         already_formatted_files.append(file)
     return already_formatted_files
+
 
 
 
